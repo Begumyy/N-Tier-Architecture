@@ -1,6 +1,8 @@
 ﻿using BusinessLayer.Concrete;
+using BusinessLayer.FluentValidation;
 using DataAccessLayer.EntityFramework;
 using EntityLayer.Concrete;
+using FluentValidation.Results;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Demo_Product.Controllers
@@ -23,7 +25,42 @@ namespace Demo_Product.Controllers
         [HttpPost]
         public IActionResult AddProduct(Product p)
         {
-            productManager.TInsert(p);
+            ProductValidator validationRules= new ProductValidator();
+            ValidationResult results = validationRules.Validate(p);
+            if(results.IsValid)
+            {
+                productManager.TInsert(p);
+                return RedirectToAction("Index");
+            }
+            else
+            {
+                foreach(var item in results.Errors)
+                {
+                    ModelState.AddModelError(item.PropertyName, item.ErrorMessage);
+                }
+            }
+            return View();
+        }
+
+        public IActionResult DeleteProduct(int id)
+        {
+            var value=productManager.TGetById(id);
+            productManager.TDelete(value);
+            return RedirectToAction("Index");
+        }
+
+        [HttpGet]
+        public IActionResult UpdateProduct(int id)
+        {
+            var value = productManager.TGetById(id);
+            return View(value);
+        }
+
+        [HttpPost]
+        public IActionResult UpdateProduct(Product p)
+        {
+            //var value = productManager.TGetById(p.Id);
+            productManager.TUpdate(p);
             return RedirectToAction("Index");
         }
     }
